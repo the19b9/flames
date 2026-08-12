@@ -1,2 +1,2 @@
-# flames
+# FLAMES
 FLMX by flamesAI
