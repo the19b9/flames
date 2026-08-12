@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>flames</title>
+  <style>
+    :root {
+      --primary: #e91e63;
+      --primary-dark: #c2185b;
+      --accent: #f48fb1;
+      --bg: #fff0f5;
+      --card: #ffffff;
+      --text: #4a1525;
+      --muted: #ad1457;
+      --border: #f8bbd0;
+      --glow: rgba(233, 30, 99, 0.25);
+      --input-bg: #fffafc;
+      --result-bg: #fff0f5;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+
+    body {
+      background: var(--bg); min-height: 100vh; display: flex; justify-content: center; align-items: center;
+      padding: 20px; color: var(--text); transition: background 0.5s ease, color 0.4s ease; position: relative; overflow-x: hidden;
+    }
+
+    /* ========== SPLASH SCREEN ========== */
+    #splash {
+      position: fixed; inset: 0; z-index: 10000;
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      transition: opacity 0.8s ease, visibility 0.8s ease;
+      overflow: hidden;
+    }
+    #splash::before {
+      content: ''; position: absolute; inset: 0;
+      background: 
+        radial-gradient(circle at 20% 30%, rgba(120, 80, 255, 0.25) 0%, transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(255, 60, 120, 0.2) 0%, transparent 40%),
+        radial-gradient(circle at 50% 50%, rgba(60, 180, 255, 0.15) 0%, transparent 50%);
+      animation: splashBg 8s ease-in-out infinite alternate;
+    }
+    @keyframes splashBg {
+      0% { opacity: 0.7; transform: scale(1); }
+      100% { opacity: 1; transform: scale(1.05); }
+    }
+    #splash.hide { opacity: 0; visibility: hidden; pointer-events: none; }
+    .splash-title {
+      font-size: 36px; font-weight: 800; color: #fff; text-align: center;
+      letter-spacing: 3px; padding: 0 24px; line-height: 1.2; z-index: 1;
+      text-shadow: 0 0 30px rgba(180, 120, 255, 0.5);
+      animation: splashFade 1s ease;
+    }
+    .splash-tagline {
+      font-size: 13px; font-weight: 500; color: #c4b5fd; text-align: center;
+      letter-spacing: 0.8px; padding: 0 24px; margin-top: 10px; line-height: 1.4; z-index: 1;
+      opacity: 0.9; animation: splashFade 1s ease 0.1s both;
+    }
+    .splash-status {
+      margin-top: 28px; font-size: 14px; color: #c4b5fd; z-index: 1;
+      font-weight: 500; letter-spacing: 0.5px; min-height: 22px;
+      animation: splashFade 1s ease 0.2s both;
+      /* Fixed width + left-aligned text + centered block:
+         left edge stays put; longer messages only extend to the right */
+      width: 255px;
+      max-width: 90vw;
+      text-align: left;
+      white-space: nowrap;
+      margin-left: auto;
+      margin-right: auto;
+      box-sizing: border-box;
+    }
+    .splash-dots {
+      margin-top: 20px; display: flex; gap: 8px; z-index: 1;
+    }
+    .splash-footer {
+      position: absolute;
+      bottom: 28px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 500;
+      color: rgba(196, 181, 253, 0.75);
+      letter-spacing: 0.3px;
+      padding: 0 20px;
+      z-index: 1;
+      line-height: 1.4;
+      animation: splashFade 1s ease 0.4s both;
+    }
+    .splash-dot {
+      width: 8px; height: 8px; border-radius: 50%; background: #a78bfa;
+      animation: dotPulse 1.2s ease-in-out infinite;
+    }
+    .splash-dot:nth-child(2) { animation-delay: 0.2s; }
+    .splash-dot:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes dotPulse {
+      0%, 100% { opacity: 0.3; transform: scale(0.8); }
+      50% { opacity: 1; transform: scale(1.2); }
+    }
+    @keyframes splashFade {
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ========== MINIMAL MODE - FORCE BLACK ========== */
+    body.theme-minimal * { font-family: 'Courier New', Courier, monospace !important; }
+    body.theme-minimal {
+      background: #f5f5f5 !important; color: #111 !important;
+    }
+    body.theme-minimal .container {
+      background: #fff !important; border: 2px solid #111 !important;
+      box-shadow: none !important; border-radius: 0 !important;
+    }
+    body.theme-minimal .container::before { display: none !important; }
+    body.theme-minimal h1#appTitle { color: #111 !important; text-shadow: none !important; font-size: 20px !important; }
+    body.theme-minimal .subtitle { color: #111 !important; }
+    body.theme-minimal .toggle-label { color: #111 !important; }
+    body.theme-minimal .mode-btn {
+      border: 2px solid #111 !important; color: #111 !important; background: #fff !important;
+      border-radius: 0 !important; box-shadow: none !important;
+    }
+    body.theme-minimal .mode-btn.active {
+      background: #111 !important; color: #fff !important; transform: none !important;
+    }
+    body.theme-minimal input[type="text"] {
+      border: 2px solid #111 !important; background: #fff !important; color: #111 !important;
+      border-radius: 0 !important; box-shadow: none !important;
+    }
+    body.theme-minimal .btn {
+      background: #111 !important; color: #fff !important; border-radius: 0 !important;
+      box-shadow: none !important; text-shadow: none !important;
+    }
+    body.theme-minimal .btn:hover { transform: none !important; }
+    body.theme-minimal .small-btn, body.theme-minimal .action-btn {
+      border: 1px solid #111 !important; color: #111 !important; background: #fff !important; border-radius: 0 !important;
+    }
+    body.theme-minimal .result-box {
+      background: #fafafa !important; border: 2px dashed #111 !important; border-radius: 0 !important;
+      animation: none !important;
+    }
+    body.theme-minimal .flame-letter {
+      background: #eee !important; color: #111 !important; border-radius: 0 !important;
+    }
+    body.theme-minimal .flame-letter.active {
+      background: #111 !important; color: #fff !important; transform: none !important;
+      box-shadow: none !important; animation: none !important;
+    }
+    body.theme-minimal .flame-letter.struck { background: #ddd !important; color: #888 !important; }
+    body.theme-minimal .full-flames, body.theme-minimal .steps, body.theme-minimal .history-box {
+      background: #fafafa !important; border: 1px solid #111 !important; border-radius: 0 !important; color: #111 !important;
+    }
+    body.theme-minimal .full-flames h4, body.theme-minimal .steps h4, body.theme-minimal .history-box h4,
+    body.theme-minimal .result-main, body.theme-minimal .full-flames strong,
+    body.theme-minimal .result-desc, body.theme-minimal .result-label,
+    body.theme-minimal label, body.theme-minimal .empty-hint, body.theme-minimal .footer,
+    body.theme-minimal .history-item, body.theme-minimal .calc-text,
+    body.theme-minimal .error-msg { color: #111 !important; }
+    body.theme-minimal .error-msg { color: #111 !important; }
+    body.theme-minimal .calculating { animation: none !important; }
+    body.theme-minimal .spinner-letter { animation: none !important; background: #eee !important; color: #111 !important; border-radius: 0 !important; }
+    body.theme-minimal .progress-fill { background: #111 !important; animation: none !important; width: 100% !important; }
+    body.theme-minimal .cheeky-line, body.theme-minimal .position-emoji { display: none !important; }
+    body.theme-minimal #confettiCanvas { display: none !important; }
+    body.theme-minimal .sound-control { display: none !important; }
+    body.theme-minimal.legend-mode::before,
+    body.theme-minimal.legend-mode::after { display: none !important; }
+
+    /* ========== NORMAL STYLES ========== */
+    body.legend-mode { background: #050102; }
+    body.legend-mode::before {
+      content: ''; position: fixed; inset: 0;
+      background: radial-gradient(ellipse at 20% 30%, rgba(200,20,50,0.4) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 70%, rgba(150,10,30,0.45) 0%, transparent 45%),
+        radial-gradient(ellipse at 50% 50%, rgba(100,5,20,0.55) 0%, transparent 70%),
+        linear-gradient(160deg, #050102 0%, #120308 40%, #1a040a 100%);
+      filter: blur(10px); z-index: -2; animation: legendPulse 8s ease-in-out infinite alternate;
+    }
+    body.legend-mode::after {
+      content: ''; position: fixed; inset: 0;
+      background: radial-gradient(circle at 30% 40%, rgba(255,40,80,0.12) 0%, transparent 25%),
+        radial-gradient(circle at 70% 60%, rgba(255,20,60,0.1) 0%, transparent 30%);
+      filter: blur(25px); z-index: -1; opacity: 0.85; animation: legendGlow 6s ease-in-out infinite alternate;
+    }
+    @keyframes legendPulse { 0% { filter: blur(8px); opacity: 0.85; } 100% { filter: blur(14px); opacity: 1; } }
+    @keyframes legendGlow { 0% { opacity: 0.6; } 100% { opacity: 0.95; } }
+
+    .container {
+      background: var(--card); border-radius: 24px; box-shadow: 0 20px 50px var(--glow);
+      width: 100%; max-width: 480px; padding: 28px 24px; position: relative; overflow: hidden;
+      border: 1px solid var(--border); transition: background 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease; z-index: 1;
+    }
+    body.legend-mode .container {
+      background: rgba(20,2,6,0.94); border-color: #6b0010; backdrop-filter: blur(14px); box-shadow: 0 0 40px rgba(255,0,40,0.25);
+    }
+    .container::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 5px;
+      background: linear-gradient(90deg, var(--primary), var(--accent), var(--primary)); transition: background 0.5s ease;
+    }
+
+    .top-bar {
+      position: absolute; top: 12px; right: 14px; z-index: 5;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .toggle-label { font-size: 10px; color: var(--muted); font-weight: 600; }
+    .toggle-switch {
+      width: 36px; height: 20px; background: var(--border); border-radius: 12px;
+      position: relative; cursor: pointer; transition: background 0.25s;
+    }
+    .toggle-switch.on { background: var(--primary); }
+    body.theme-minimal .toggle-switch { background: #ccc; }
+    body.theme-minimal .toggle-switch.on { background: #111; }
+    .toggle-knob {
+      width: 16px; height: 16px; background: #fff; border-radius: 50%;
+      position: absolute; top: 2px; left: 2px; transition: transform 0.25s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .toggle-switch.on .toggle-knob { transform: translateX(16px); }
+
+    h1#appTitle {
+      text-align: center; font-size: 22px; font-weight: 800; color: var(--primary); margin-bottom: 4px;
+      letter-spacing: 0.5px; text-shadow: 0 0 16px var(--glow); transition: all 0.4s ease; min-height: 34px;
+      display: flex; align-items: center; justify-content: center; white-space: nowrap; max-width: 100%; padding: 0 2px;
+    }
+    body.legend-mode h1#appTitle { font-size: 14px; letter-spacing: 0; }
+    .subtitle {
+      text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 18px;
+      transition: color 0.4s ease, font-size 0.3s ease; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; padding: 0 2px;
+    }
+    body.legend-mode .subtitle { font-size: 11px; letter-spacing: -0.2px; }
+
+    .mode-section { margin-bottom: 18px; }
+    .mode-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .mode-btn {
+      padding: 10px 4px; border: 2px solid var(--border); background: transparent; border-radius: 12px;
+      font-size: 13px; font-weight: 700; cursor: pointer; color: var(--muted); transition: all 0.25s ease; text-align: center;
+      -webkit-text-fill-color: currentColor; text-shadow: none;
+    }
+    .mode-btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+    .mode-btn.active {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      border-color: transparent; color: #ffffff !important; -webkit-text-fill-color: #ffffff !important;
+      box-shadow: 0 4px 14px var(--glow); transform: translateY(-1px);
+      text-shadow: 0 1px 2px rgba(0,0,0,0.35);
+    }
+    .mode-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .input-group { margin-bottom: 14px; }
+    label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 5px; letter-spacing: 0.3px; }
+    input[type="text"] {
+      width: 100%; padding: 12px 14px; border: 2px solid var(--border); border-radius: 12px; font-size: 15px;
+      transition: all 0.25s ease; background: var(--input-bg); color: var(--text);
+    }
+    input[type="text"]::placeholder { color: #999; opacity: 0.7; }
+    input[type="text"]:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px var(--glow); }
+    body.legend-mode input[type="text"] { background: #120205; color: #ffcdd2; border-color: #6b0010; }
+
+    .name-actions { display: flex; gap: 8px; margin-bottom: 12px; }
+    .small-btn {
+      flex: 1; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); background: transparent;
+      color: var(--muted); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    }
+    .small-btn:hover { border-color: var(--primary); color: var(--primary); background: rgba(255,255,255,0.05); }
+
+    .btn {
+      width: 100%; padding: 14px; background: linear-gradient(135deg, var(--primary), var(--accent)); color: white;
+      border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.25s ease;
+      margin-top: 6px; letter-spacing: 0.5px; text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px var(--glow); }
+    .btn:active { transform: translateY(0); }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .empty-hint { text-align: center; font-size: 12px; color: var(--muted); opacity: 0.75; margin-top: 10px; margin-bottom: 4px; }
+    .result-box {
+      margin-top: 22px; padding: 20px; border-radius: 16px; background: var(--result-bg); border: 2px dashed var(--border);
+      text-align: center; display: none; animation: resultReveal 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    body.legend-mode .result-box { background: rgba(20,2,6,0.96); border-color: #6b0010; }
+    body.theme-minimal .result-box { animation: none; }
+    @keyframes resultReveal { from { opacity: 0; transform: translateY(18px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+    .result-label { font-size: 12px; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1.2px; }
+    .result-main { font-size: 19px; font-weight: 800; color: var(--primary); margin-bottom: 6px; line-height: 1.35; }
+    .result-desc { font-size: 13px; color: var(--muted); line-height: 1.5; }
+    .cheeky-line { margin-top: 10px; font-size: 13px; font-style: italic; color: var(--accent); display: none; }
+    .position-emoji { font-size: 28px; margin: 6px 0; display: none; }
+
+    .full-flames {
+      margin-top: 16px; text-align: left; font-size: 12px; color: var(--muted); background: rgba(0,0,0,0.04);
+      padding: 12px; border-radius: 12px; border: 1px solid var(--border); display: none;
+    }
+    body.legend-mode .full-flames { background: #0f0205; border-color: #4a0010; color: #ff8a80; }
+    .full-flames h4 { margin-bottom: 8px; color: var(--primary); font-size: 12px; text-align: center; }
+    .full-flames ul { list-style: none; padding: 0; }
+    .full-flames li { margin-bottom: 5px; padding-left: 4px; line-height: 1.4; }
+    .full-flames strong { color: var(--primary); }
+
+    .steps {
+      margin-top: 14px; text-align: left; font-size: 11px; color: var(--muted); background: rgba(0,0,0,0.04);
+      padding: 10px; border-radius: 10px; border: 1px solid var(--border); max-height: 120px; overflow-y: auto;
+    }
+    body.legend-mode .steps { background: #0f0205; border-color: #4a0010; color: #ce9393; }
+    .steps h4 { margin-bottom: 5px; color: var(--primary); font-size: 11px; }
+    .steps ol { padding-left: 16px; }
+    .steps li { margin-bottom: 2px; }
+
+    .flames-letters { display: flex; justify-content: center; gap: 7px; margin: 12px 0 8px; flex-wrap: wrap; }
+    .flame-letter {
+      width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 50%;
+      font-weight: 700; font-size: 14px; background: var(--border); color: var(--primary); transition: all 0.35s ease;
+    }
+    .flame-letter.active {
+      background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; transform: scale(1.25);
+      box-shadow: 0 0 18px var(--glow); animation: winnerBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    @keyframes winnerBounce { 0% { transform: scale(0.5); } 60% { transform: scale(1.35); } 100% { transform: scale(1.25); } }
+    .flame-letter.struck { background: #ddd; color: #aaa; text-decoration: line-through; transform: scale(0.85); opacity: 0.55; }
+    body.legend-mode .flame-letter { background: #2a0810; color: #ff6b81; }
+    body.legend-mode .flame-letter.struck { background: #1a0508; color: #6d3a3a; }
+
+    .action-row { display: flex; gap: 8px; margin-top: 14px; }
+    .action-btn {
+      flex: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--border); background: transparent;
+      color: var(--muted); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    }
+    .action-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+    .calculating { display: none; margin-top: 22px; text-align: center; padding: 24px 14px; }
+    .calculating.active { display: block; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .calc-text { font-size: 14px; color: var(--muted); margin-bottom: 14px; font-weight: 600; }
+    .spinner-letters { display: flex; justify-content: center; gap: 8px; margin-bottom: 10px; }
+    .spinner-letter {
+      width: 36px; height: 36px; border-radius: 50%; background: var(--border); color: var(--primary);
+      display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px;
+      animation: pulse 0.75s ease-in-out infinite;
+    }
+    .spinner-letter:nth-child(1) { animation-delay: 0s; }
+    .spinner-letter:nth-child(2) { animation-delay: 0.1s; }
+    .spinner-letter:nth-child(3) { animation-delay: 0.2s; }
+    .spinner-letter:nth-child(4) { animation-delay: 0.3s; }
+    .spinner-letter:nth-child(5) { animation-delay: 0.4s; }
+    .spinner-letter:nth-child(6) { animation-delay: 0.5s; }
+    body.boy-mode .spinner-letter { animation-duration: 0.55s; }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.25); background: linear-gradient(135deg, var(--primary), var(--accent)); color: white; box-shadow: 0 0 12px var(--glow); }
+    }
+    .progress-bar { height: 4px; background: var(--border); border-radius: 4px; overflow: hidden; margin-top: 12px; }
+    .progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--primary), var(--accent)); border-radius: 4px; animation: progress 1.8s ease-in-out forwards; }
+    body.boy-mode .progress-fill { animation-duration: 1.3s; }
+    @keyframes progress { 0% { width: 0%; } 100% { width: 100%; } }
+
+    .sound-control { display: none; margin-top: 12px; text-align: center; }
+    .sound-control.visible { display: block; }
+    .sound-btn {
+      padding: 8px 16px; border-radius: 20px; border: 1px solid #6b0010; background: #1a0508;
+      color: #ff6b81; font-size: 12px; cursor: pointer; transition: all 0.2s;
+    }
+    .sound-btn:hover { background: #2a0810; }
+    .sound-btn.playing { background: linear-gradient(135deg, #ff0022, #ff3300); color: white; border-color: transparent; }
+
+    .error-msg { color: #ff1744; font-size: 13px; text-align: center; margin-top: 8px; display: none; font-weight: 500; }
+    .history-box {
+      margin-top: 16px; padding: 12px; border-radius: 12px; border: 1px solid var(--border);
+      background: rgba(0,0,0,0.03); display: none;
+    }
+    body.legend-mode .history-box { background: #0f0205; border-color: #4a0010; }
+    .history-box h4 { font-size: 12px; color: var(--primary); margin-bottom: 8px; text-align: center; }
+    .history-item { font-size: 11px; color: var(--muted); padding: 4px 0; border-bottom: 1px solid var(--border); }
+    .history-item:last-child { border-bottom: none; }
+    .footer {
+      text-align: center; margin-top: 16px; font-size: 10px; color: var(--muted);
+      opacity: 0.75; letter-spacing: 0.2px; line-height: 1.4; padding: 0 8px;
+    }
+    #confettiCanvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999; }
+
+    /* ========== THEME SELECTOR SCREEN ========== */
+    #themePicker {
+      position: fixed; inset: 0; z-index: 9000;
+      display: none; flex-direction: column; justify-content: center; align-items: center;
+      background: linear-gradient(160deg, #0f0c29, #1a1535 40%, #24243e);
+      padding: 24px 16px; overflow-y: auto;
+      opacity: 0; transition: opacity 0.5s ease;
+    }
+    #themePicker.show { display: flex; opacity: 1; }
+    #themePicker.hide { opacity: 0; pointer-events: none; }
+    .tp-title {
+      font-size: 22px; font-weight: 800; color: #fff; text-align: center;
+      letter-spacing: 0.5px; margin-bottom: 6px;
+    }
+    .tp-sub {
+      font-size: 12px; color: #a78bfa; text-align: center; margin-bottom: 22px; opacity: 0.9;
+    }
+    .tp-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+      width: 100%; max-width: 360px; margin-bottom: 20px;
+    }
+    .tp-card {
+      background: rgba(255,255,255,0.06); border: 2px solid rgba(255,255,255,0.12);
+      border-radius: 16px; padding: 12px 10px 14px; cursor: pointer;
+      transition: all 0.25s ease; text-align: center; color: #e0e0ff;
+    }
+    .tp-card:hover { border-color: rgba(167,139,250,0.5); background: rgba(255,255,255,0.1); transform: translateY(-2px); }
+    .tp-card.selected {
+      border-color: #a78bfa; background: rgba(167,139,250,0.18);
+      box-shadow: 0 0 20px rgba(167,139,250,0.25);
+    }
+    .tp-preview {
+      height: 44px; border-radius: 10px; margin-bottom: 8px;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+    .tp-prev-default { background: linear-gradient(135deg, #fff0f5, #f48fb1 60%, #e91e63); }
+    .tp-prev-minimal { background: linear-gradient(135deg, #f5f5f5, #fff 50%, #111); }
+    .tp-prev-terminal { background: linear-gradient(135deg, #0a0f0a, #001a00 40%, #00ff41); }
+    .tp-prev-material { background: linear-gradient(135deg, #e8def8, #6750a4 55%, #21005d); }
+    .tp-prev-glass {
+      background: linear-gradient(135deg, rgba(255,255,255,0.35), rgba(180,200,255,0.2) 40%, rgba(40,60,120,0.5));
+      backdrop-filter: blur(4px);
+    }
+    .tp-name { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+    .tp-desc { font-size: 10px; opacity: 0.7; }
+    .tp-card[data-theme="glass"] { grid-column: 1 / -1; max-width: 180px; justify-self: center; }
+    .tp-continue {
+      width: 100%; max-width: 360px; padding: 14px; border: none; border-radius: 14px;
+      background: linear-gradient(135deg, #7c4dff, #a78bfa); color: #fff;
+      font-size: 15px; font-weight: 700; cursor: pointer; opacity: 0.45;
+      transition: all 0.25s ease; letter-spacing: 0.3px;
+    }
+    .tp-continue:not(:disabled) { opacity: 1; }
+    .tp-continue:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(124,77,255,0.4); }
+    .tp-continue:disabled { cursor: not-allowed; }
+
+    /* Theme select in top-bar */
+    .theme-select-label {
+      font-size: 10px; color: var(--muted); font-weight: 600; margin-right: 2px;
+    }
+    .theme-select {
+      font-size: 11px; font-weight: 600; padding: 4px 6px; border-radius: 8px;
+      border: 1px solid var(--border); background: var(--input-bg); color: var(--text);
+      cursor: pointer; max-width: 110px; outline: none;
+    }
+    .theme-select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--glow); }
+
+    /* ========== TERMINAL THEME ========== */
+    body.theme-terminal {
+      background: #0a0e0a !important; color: #00ff41 !important;
+      font-family: 'Courier New', Courier, monospace !important;
+    }
+    body.theme-terminal * { font-family: 'Courier New', Courier, monospace !important; }
+    body.theme-terminal::before {
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 10001;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, 0.15) 2px,
+        rgba(0, 0, 0, 0.15) 4px
+      );
+      opacity: 0.35;
+    }
+    body.theme-terminal .container {
+      background: #0d140d !important; border: 1px solid #00ff41 !important;
+      border-radius: 0 !important; box-shadow: 0 0 24px rgba(0,255,65,0.15), inset 0 0 40px rgba(0,255,65,0.03) !important;
+    }
+    body.theme-terminal .container::before {
+      background: #00ff41 !important; height: 2px !important;
+    }
+    body.theme-terminal h1#appTitle {
+      color: #00ff41 !important; text-shadow: 0 0 10px rgba(0,255,65,0.5) !important;
+      font-size: 18px !important; letter-spacing: 2px !important;
+    }
+    body.theme-terminal .subtitle { color: #33ff66 !important; opacity: 0.8; }
+    body.theme-terminal .theme-select-label { color: #00cc33 !important; }
+    body.theme-terminal .theme-select {
+      background: #0a0e0a !important; color: #00ff41 !important; border-color: #00ff41 !important;
+      border-radius: 0 !important;
+    }
+    body.theme-terminal .mode-btn {
+      border: 1px solid #00aa30 !important; color: #00cc33 !important; background: transparent !important;
+      border-radius: 0 !important; box-shadow: none !important;
+    }
+    body.theme-terminal .mode-btn.active {
+      background: #00ff41 !important; color: #0a0e0a !important; border-color: #00ff41 !important;
+      text-shadow: none !important; transform: none !important;
+    }
+    body.theme-terminal .mode-btn:hover:not(:disabled) { border-color: #00ff41; color: #00ff41; }
+    body.theme-terminal label { color: #00cc33 !important; }
+    body.theme-terminal input[type="text"] {
+      background: #050805 !important; color: #00ff41 !important; border: 1px solid #00aa30 !important;
+      border-radius: 0 !important; box-shadow: none !important; caret-color: #00ff41;
+    }
+    body.theme-terminal input[type="text"]:focus {
+      border-color: #00ff41 !important; box-shadow: 0 0 8px rgba(0,255,65,0.3) !important;
+    }
+    body.theme-terminal input[type="text"]::placeholder { color: #006622 !important; }
+    body.theme-terminal .btn {
+      background: #00ff41 !important; color: #0a0e0a !important; border-radius: 0 !important;
+      box-shadow: 0 0 12px rgba(0,255,65,0.3) !important; text-shadow: none !important;
+      font-weight: 700; letter-spacing: 1px;
+    }
+    body.theme-terminal .btn:hover { transform: none !important; box-shadow: 0 0 20px rgba(0,255,65,0.5) !important; }
+    body.theme-terminal .small-btn, body.theme-terminal .action-btn {
+      border: 1px solid #00aa30 !important; color: #00cc33 !important; background: transparent !important;
+      border-radius: 0 !important;
+    }
+    body.theme-terminal .small-btn:hover, body.theme-terminal .action-btn:hover {
+      border-color: #00ff41 !important; color: #00ff41 !important; background: rgba(0,255,65,0.08) !important;
+    }
+    body.theme-terminal .result-box {
+      background: #081008 !important; border: 1px dashed #00aa30 !important; border-radius: 0 !important;
+      animation: none !important;
+    }
+    body.theme-terminal .result-main { color: #00ff41 !important; }
+    body.theme-terminal .result-label, body.theme-terminal .result-desc,
+    body.theme-terminal .empty-hint, body.theme-terminal .footer,
+    body.theme-terminal .history-item, body.theme-terminal .calc-text { color: #00cc33 !important; }
+    body.theme-terminal .flame-letter {
+      background: #0d1a0d !important; color: #00ff41 !important; border-radius: 0 !important;
+      border: 1px solid #00aa30;
+    }
+    body.theme-terminal .flame-letter.active {
+      background: #00ff41 !important; color: #0a0e0a !important; transform: none !important;
+      box-shadow: 0 0 12px rgba(0,255,65,0.5) !important; animation: none !important;
+    }
+    body.theme-terminal .flame-letter.struck { background: #061006 !important; color: #004411 !important; opacity: 0.5; }
+    body.theme-terminal .full-flames, body.theme-terminal .steps, body.theme-terminal .history-box {
+      background: #081008 !important; border: 1px solid #00aa30 !important; border-radius: 0 !important; color: #00cc33 !important;
+    }
+    body.theme-terminal .full-flames h4, body.theme-terminal .steps h4, body.theme-terminal .history-box h4,
+    body.theme-terminal .full-flames strong { color: #00ff41 !important; }
+    body.theme-terminal .spinner-letter {
+      background: #0d1a0d !important; color: #00ff41 !important; border-radius: 0 !important; border: 1px solid #00aa30;
+    }
+    body.theme-terminal .progress-fill { background: #00ff41 !important; }
+    body.theme-terminal .progress-bar { background: #0d1a0d !important; }
+    body.theme-terminal .error-msg { color: #ff3333 !important; }
+    body.theme-terminal .cheeky-line, body.theme-terminal .position-emoji { display: none !important; }
+    body.theme-terminal #confettiCanvas { display: none !important; }
+    body.theme-terminal .sound-control { display: none !important; }
+    body.theme-terminal.legend-mode::before,
+    body.theme-terminal.legend-mode::after { display: none !important; }
+    body.theme-terminal .calculating { animation: none !important; }
+
+    /* ========== MATERIAL DESIGN 3 THEME ========== */
+    body.theme-material {
+      background: #fef7ff !important; color: #1d1b20 !important;
+      font-family: 'Roboto', 'Segoe UI', system-ui, sans-serif !important;
+    }
+    body.theme-material .container {
+      background: #fffbfe !important; border: none !important; border-radius: 28px !important;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.06) !important;
+    }
+    body.theme-material .container::before {
+      background: transparent !important; height: 0 !important;
+    }
+    body.theme-material h1#appTitle {
+      color: #6750a4 !important; text-shadow: none !important; font-weight: 500 !important;
+      font-size: 22px !important; letter-spacing: 0 !important;
+    }
+    body.theme-material .subtitle { color: #49454f !important; font-weight: 400; }
+    body.theme-material .theme-select-label { color: #49454f !important; }
+    body.theme-material .theme-select {
+      background: #e8def8 !important; color: #1d1b20 !important; border: none !important;
+      border-radius: 8px !important; padding: 6px 8px;
+    }
+    body.theme-material .mode-btn {
+      border: 1px solid #79747e !important; color: #6750a4 !important; background: transparent !important;
+      border-radius: 20px !important; box-shadow: none !important; font-weight: 500;
+    }
+    body.theme-material .mode-btn.active {
+      background: #e8def8 !important; color: #21005d !important; border-color: transparent !important;
+      box-shadow: none !important; transform: none !important; text-shadow: none !important;
+    }
+    body.theme-material .mode-btn:hover:not(:disabled) { background: rgba(103,80,164,0.08); }
+    body.theme-material label { color: #49454f !important; font-weight: 500; }
+    body.theme-material input[type="text"] {
+      background: #e7e0ec !important; color: #1d1b20 !important; border: none !important;
+      border-bottom: 2px solid #79747e !important; border-radius: 4px 4px 0 0 !important;
+      box-shadow: none !important; padding: 14px 12px 10px;
+    }
+    body.theme-material input[type="text"]:focus {
+      border-bottom-color: #6750a4 !important; background: #e8def8 !important;
+      box-shadow: none !important;
+    }
+    body.theme-material .btn {
+      background: #6750a4 !important; color: #ffffff !important; border-radius: 20px !important;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.15) !important; text-shadow: none !important;
+      font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; font-size: 14px;
+    }
+    body.theme-material .btn:hover {
+      transform: none !important; box-shadow: 0 2px 6px rgba(103,80,164,0.35) !important;
+      background: #7c67b6 !important;
+    }
+    body.theme-material .small-btn, body.theme-material .action-btn {
+      border: 1px solid #79747e !important; color: #6750a4 !important; background: transparent !important;
+      border-radius: 20px !important; font-weight: 500;
+    }
+    body.theme-material .small-btn:hover, body.theme-material .action-btn:hover {
+      background: rgba(103,80,164,0.08) !important; border-color: #6750a4 !important;
+    }
+    body.theme-material .result-box {
+      background: #f7f2fa !important; border: none !important; border-radius: 16px !important;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    body.theme-material .result-main { color: #6750a4 !important; font-weight: 500; }
+    body.theme-material .result-label, body.theme-material .result-desc,
+    body.theme-material .empty-hint, body.theme-material .footer,
+    body.theme-material .history-item, body.theme-material .calc-text { color: #49454f !important; }
+    body.theme-material .flame-letter {
+      background: #e8def8 !important; color: #6750a4 !important; border-radius: 50% !important;
+    }
+    body.theme-material .flame-letter.active {
+      background: #6750a4 !important; color: #fff !important;
+      box-shadow: 0 2px 8px rgba(103,80,164,0.4) !important;
+    }
+    body.theme-material .flame-letter.struck { background: #e7e0ec !important; color: #79747e !important; }
+    body.theme-material .full-flames, body.theme-material .steps, body.theme-material .history-box {
+      background: #f7f2fa !important; border: none !important; border-radius: 12px !important; color: #49454f !important;
+    }
+    body.theme-material .full-flames h4, body.theme-material .steps h4, body.theme-material .history-box h4,
+    body.theme-material .full-flames strong { color: #6750a4 !important; }
+    body.theme-material .spinner-letter {
+      background: #e8def8 !important; color: #6750a4 !important;
+    }
+    body.theme-material .progress-fill { background: #6750a4 !important; }
+    body.theme-material .progress-bar { background: #e8def8 !important; border-radius: 4px; }
+    body.theme-material .error-msg { color: #b3261e !important; }
+    body.theme-material.legend-mode::before,
+    body.theme-material.legend-mode::after { display: none !important; }
+
+    /* ========== LIQUID GLASS THEME (Apple-inspired / iOS-style) ========== */
+    body.theme-glass {
+      background: #0b1224 !important;
+      color: #f5f5f7 !important;
+      /* Create stacking context so decorative layers stay visible */
+      isolation: isolate;
+      min-height: 100vh;
+    }
+    /* Ambient light blobs — MUST be z-index >= 0 inside isolated body, not -1 */
+    body.theme-glass::before {
+      content: '';
+      position: fixed;
+      inset: -20%;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(ellipse 50% 40% at 15% 20%, rgba(100, 160, 255, 0.55) 0%, transparent 55%),
+        radial-gradient(ellipse 45% 40% at 85% 15%, rgba(220, 120, 255, 0.4) 0%, transparent 50%),
+        radial-gradient(ellipse 55% 45% at 70% 80%, rgba(80, 220, 255, 0.35) 0%, transparent 55%),
+        radial-gradient(ellipse 40% 35% at 25% 75%, rgba(255, 120, 180, 0.28) 0%, transparent 50%),
+        radial-gradient(ellipse 60% 50% at 50% 50%, rgba(40, 80, 180, 0.25) 0%, transparent 70%);
+      filter: blur(60px) saturate(140%);
+      animation: glassOrb 12s ease-in-out infinite alternate;
+    }
+    body.theme-glass::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 50% 0%, rgba(255,255,255,0.08) 0%, transparent 40%),
+        linear-gradient(180deg, rgba(15, 25, 50, 0.3) 0%, rgba(10, 15, 30, 0.5) 100%);
+    }
+    @keyframes glassOrb {
+      0% { transform: scale(1) translate(0, 0); opacity: 0.85; }
+      100% { transform: scale(1.08) translate(-2%, 3%); opacity: 1; }
+    }
+    /* Kill mode-specific dark overlays under glass */
+    body.theme-glass.legend-mode::before,
+    body.theme-glass.legend-mode::after {
+      /* keep glass ambient orbs; do not let legend override */
+      content: '';
+    }
+    body.theme-glass.legend-mode {
+      background: #0b1224 !important;
+    }
+
+    body.theme-glass .container {
+      position: relative;
+      z-index: 1;
+      background: rgba(255, 255, 255, 0.14) !important;
+      border: 1px solid rgba(255, 255, 255, 0.28) !important;
+      border-radius: 28px !important;
+      /* overflow must NOT be hidden or backdrop-filter is clipped badly */
+      overflow: visible !important;
+      backdrop-filter: blur(48px) saturate(180%) brightness(1.05) !important;
+      -webkit-backdrop-filter: blur(48px) saturate(180%) brightness(1.05) !important;
+      box-shadow:
+        0 8px 40px rgba(0, 0, 0, 0.35),
+        0 0 0 0.5px rgba(255, 255, 255, 0.15),
+        inset 0 1px 1px rgba(255, 255, 255, 0.35),
+        inset 0 -1px 1px rgba(255, 255, 255, 0.06) !important;
+    }
+    body.theme-glass .container::before {
+      /* top specular highlight line */
+      content: '';
+      position: absolute;
+      top: 0; left: 12%; right: 12%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent) !important;
+      border-radius: 0 !important;
+      opacity: 1 !important;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    body.theme-glass h1#appTitle {
+      color: #ffffff !important;
+      text-shadow: 0 1px 20px rgba(255,255,255,0.25) !important;
+      font-weight: 700 !important;
+      letter-spacing: -0.3px;
+      -webkit-text-fill-color: #ffffff !important;
+    }
+    body.theme-glass .subtitle {
+      color: rgba(255, 255, 255, 0.7) !important;
+      -webkit-text-fill-color: rgba(255, 255, 255, 0.7) !important;
+    }
+    body.theme-glass .theme-select-label {
+      color: rgba(255, 255, 255, 0.55) !important;
+    }
+    body.theme-glass .theme-select {
+      background: rgba(255, 255, 255, 0.14) !important;
+      color: #fff !important;
+      border: 1px solid rgba(255, 255, 255, 0.25) !important;
+      border-radius: 12px !important;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+    body.theme-glass .theme-select option {
+      background: #1a2338;
+      color: #fff;
+    }
+
+    body.theme-glass .mode-btn {
+      border: 1px solid rgba(255, 255, 255, 0.22) !important;
+      color: rgba(255, 255, 255, 0.8) !important;
+      -webkit-text-fill-color: rgba(255, 255, 255, 0.8) !important;
+      background: rgba(255, 255, 255, 0.08) !important;
+      border-radius: 14px !important;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12) !important;
+      text-shadow: none !important;
+    }
+    body.theme-glass .mode-btn.active {
+      background: rgba(255, 255, 255, 0.28) !important;
+      color: #ffffff !important;
+      -webkit-text-fill-color: #ffffff !important;
+      border-color: rgba(255, 255, 255, 0.45) !important;
+      box-shadow:
+        0 0 24px rgba(255, 255, 255, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+      transform: none !important;
+      text-shadow: none !important;
+    }
+    body.theme-glass .mode-btn:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.16) !important;
+      border-color: rgba(255, 255, 255, 0.38) !important;
+      color: #fff !important;
+      -webkit-text-fill-color: #fff !important;
+    }
+    body.theme-glass .mode-btn:disabled { opacity: 0.4; }
+
+    body.theme-glass label {
+      color: rgba(255, 255, 255, 0.65) !important;
+    }
+    body.theme-glass input[type="text"] {
+      background: rgba(255, 255, 255, 0.12) !important;
+      color: #ffffff !important;
+      border: 1px solid rgba(255, 255, 255, 0.22) !important;
+      border-radius: 14px !important;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+      caret-color: #fff;
+    }
+    body.theme-glass input[type="text"]:focus {
+      border-color: rgba(255, 255, 255, 0.5) !important;
+      background: rgba(255, 255, 255, 0.16) !important;
+      box-shadow:
+        0 0 0 3px rgba(255, 255, 255, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+      outline: none;
+    }
+    body.theme-glass input[type="text"]::placeholder {
+      color: rgba(255, 255, 255, 0.35) !important;
+    }
+
+    body.theme-glass .btn {
+      background: rgba(255, 255, 255, 0.22) !important;
+      color: #ffffff !important;
+      -webkit-text-fill-color: #ffffff !important;
+      border: 1px solid rgba(255, 255, 255, 0.35) !important;
+      border-radius: 16px !important;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      text-shadow: none !important;
+      box-shadow:
+        0 4px 20px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.35) !important;
+      letter-spacing: 0.3px;
+    }
+    body.theme-glass .btn:hover {
+      background: rgba(255, 255, 255, 0.32) !important;
+      transform: translateY(-1px);
+      box-shadow:
+        0 8px 28px rgba(0, 0, 0, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.45) !important;
+    }
+    body.theme-glass .btn:disabled { opacity: 0.5; transform: none !important; }
+
+    body.theme-glass .small-btn,
+    body.theme-glass .action-btn {
+      border: 1px solid rgba(255, 255, 255, 0.22) !important;
+      color: rgba(255, 255, 255, 0.85) !important;
+      -webkit-text-fill-color: rgba(255, 255, 255, 0.85) !important;
+      background: rgba(255, 255, 255, 0.1) !important;
+      border-radius: 12px !important;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.12);
+    }
+    body.theme-glass .small-btn:hover,
+    body.theme-glass .action-btn:hover {
+      background: rgba(255, 255, 255, 0.18) !important;
+      border-color: rgba(255, 255, 255, 0.4) !important;
+      color: #fff !important;
+      -webkit-text-fill-color: #fff !important;
+    }
+
+    body.theme-glass .empty-hint {
+      color: rgba(255, 255, 255, 0.5) !important;
+    }
+    body.theme-glass .error-msg {
+      color: #ff8a80 !important;
+    }
+
+    body.theme-glass .result-box {
+      background: rgba(255, 255, 255, 0.1) !important;
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      border-radius: 20px !important;
+      backdrop-filter: blur(24px) saturate(160%);
+      -webkit-backdrop-filter: blur(24px) saturate(160%);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+    }
+    body.theme-glass .result-label {
+      color: rgba(255, 255, 255, 0.5) !important;
+    }
+    body.theme-glass .result-main {
+      color: #ffffff !important;
+      -webkit-text-fill-color: #ffffff !important;
+      text-shadow: 0 0 20px rgba(255,255,255,0.2);
+    }
+    body.theme-glass .result-desc {
+      color: rgba(255, 255, 255, 0.65) !important;
+    }
+    body.theme-glass .cheeky-line {
+      color: rgba(255, 255, 255, 0.75) !important;
+    }
+    body.theme-glass #pairNames {
+      color: rgba(255, 255, 255, 0.85) !important;
+    }
+
+    body.theme-glass .flame-letter {
+      background: rgba(255, 255, 255, 0.12) !important;
+      color: #ffffff !important;
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 50% !important;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.2);
+    }
+    body.theme-glass .flame-letter.active {
+      background: rgba(255, 255, 255, 0.4) !important;
+      color: #0b1224 !important;
+      border-color: rgba(255, 255, 255, 0.6);
+      box-shadow:
+        0 0 28px rgba(255, 255, 255, 0.35),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+    }
+    body.theme-glass .flame-letter.struck {
+      background: rgba(255, 255, 255, 0.05) !important;
+      color: rgba(255, 255, 255, 0.3) !important;
+      border-color: rgba(255, 255, 255, 0.08);
+      text-decoration: line-through;
+    }
+
+    body.theme-glass .full-flames,
+    body.theme-glass .steps,
+    body.theme-glass .history-box {
+      background: rgba(255, 255, 255, 0.08) !important;
+      border: 1px solid rgba(255, 255, 255, 0.15) !important;
+      border-radius: 16px !important;
+      color: rgba(255, 255, 255, 0.75) !important;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+    }
+    body.theme-glass .full-flames h4,
+    body.theme-glass .steps h4,
+    body.theme-glass .history-box h4,
+    body.theme-glass .full-flames strong {
+      color: #ffffff !important;
+    }
+    body.theme-glass .history-item {
+      color: rgba(255, 255, 255, 0.65) !important;
+      border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+    }
+
+    body.theme-glass .calculating .calc-text {
+      color: rgba(255, 255, 255, 0.7) !important;
+    }
+    body.theme-glass .spinner-letter {
+      background: rgba(255, 255, 255, 0.12) !important;
+      color: #fff !important;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 50% !important;
+    }
+    body.theme-glass .progress-bar {
+      background: rgba(255, 255, 255, 0.12) !important;
+      border-radius: 4px;
+    }
+    body.theme-glass .progress-fill {
+      background: linear-gradient(90deg, rgba(255,255,255,0.45), rgba(255,255,255,0.95)) !important;
+    }
+
+    body.theme-glass .footer {
+      color: rgba(255, 255, 255, 0.45) !important;
+    }
+
+    body.theme-glass .sound-control .sound-btn {
+      background: rgba(255, 255, 255, 0.12) !important;
+      border: 1px solid rgba(255, 255, 255, 0.28) !important;
+      color: #ffffff !important;
+      border-radius: 20px !important;
+      backdrop-filter: blur(12px);
+    }
+    body.theme-glass .sound-btn.playing {
+      background: rgba(255, 255, 255, 0.28) !important;
+      border-color: transparent !important;
+    }
+
+    /* Top bar sits above glass card content */
+    body.theme-glass .top-bar {
+      z-index: 6;
+    }
+
+  </style>
+</head>
+<body>
+  <!-- SPLASH -->
+  <div id="splash">
+    <div class="splash-title">FLMX</div>
+    <div class="splash-tagline">not your regular<br>FLAMES calculator</div>
+    <div class="splash-status" id="splashStatus">flamesAI is Generating…</div>
+    <div class="splash-dots">
+      <div class="splash-dot"></div>
+      <div class="splash-dot"></div>
+      <div class="splash-dot"></div>
+    </div>
+    <div class="splash-footer">PronHub, powered by GitHub • Cock, built by Grok</div>
+  </div>
+
+  <!-- THEME SELECTOR SCREEN -->
+  <div id="themePicker">
+    <div class="tp-title">Choose your theme</div>
+    <div class="tp-sub">You can change this anytime inside the app</div>
+    <div class="tp-grid" id="tpGrid">
+      <button class="tp-card" data-theme="default" onclick="pickTheme('default')">
+        <div class="tp-preview tp-prev-default"></div>
+        <div class="tp-name">Default</div>
+        <div class="tp-desc">Classic pink romance</div>
+      </button>
+      <button class="tp-card" data-theme="minimal" onclick="pickTheme('minimal')">
+        <div class="tp-preview tp-prev-minimal"></div>
+        <div class="tp-name">Minimal</div>
+        <div class="tp-desc">Clean mono & stark</div>
+      </button>
+      <button class="tp-card" data-theme="terminal" onclick="pickTheme('terminal')">
+        <div class="tp-preview tp-prev-terminal"></div>
+        <div class="tp-name">Terminal</div>
+        <div class="tp-desc">Hacker movie vibes</div>
+      </button>
+      <button class="tp-card" data-theme="material" onclick="pickTheme('material')">
+        <div class="tp-preview tp-prev-material"></div>
+        <div class="tp-name">Material</div>
+        <div class="tp-desc">Android Material You</div>
+      </button>
+      <button class="tp-card" data-theme="glass" onclick="pickTheme('glass')">
+        <div class="tp-preview tp-prev-glass"></div>
+        <div class="tp-name">Liquid Glass</div>
+        <div class="tp-desc">Apple glass & blur</div>
+      </button>
+    </div>
+    <button class="tp-continue" id="tpContinue" onclick="confirmTheme()" disabled>Continue</button>
+  </div>
+
+  <canvas id="confettiCanvas"></canvas>
+
+  <div class="container">
+    <div class="top-bar">
+      <label class="theme-select-label" for="themeSelect">Theme</label>
+      <select id="themeSelect" class="theme-select" onchange="onThemeSelectChange(this.value)" title="App theme">
+        <option value="default">Default</option>
+        <option value="minimal">Minimal</option>
+        <option value="terminal">Terminal</option>
+        <option value="material">Material</option>
+        <option value="glass">Liquid Glass</option>
+      </select>
+    </div>
+
+    <h1 id="appTitle">flames</h1>
+    <p class="subtitle" id="subtitle">Agentic AI <i>relationship</i> Calculator</p>
+
+    <div class="mode-section">
+      <div class="mode-buttons" id="modeButtons">
+        <button class="mode-btn active" data-mode="kid" onclick="selectMode('kid')">kid</button>
+        <button class="mode-btn" data-mode="boy" onclick="selectMode('boy')">Boy</button>
+        <button class="mode-btn" data-mode="man" onclick="selectMode('man')">MAN</button>
+        <button class="mode-btn" data-mode="legend" onclick="selectMode('legend')">LEGEND</button>
+      </div>
+    </div>
+
+    <div class="input-group">
+      <label for="name1">Your Name</label>
+      <input type="text" id="name1" placeholder="Enter first name" />
+    </div>
+    <div class="input-group">
+      <label for="name2">Partner's Name</label>
+      <input type="text" id="name2" placeholder="Enter first name" />
+    </div>
+
+    <div class="name-actions">
+      <button class="small-btn" onclick="randomNames()">🎲 Surprise me</button>
+      <button class="small-btn" onclick="clearNames()">Clear</button>
+    </div>
+
+    <div class="empty-hint" id="emptyHint">Enter two names and choose your level…</div>
+    <div class="error-msg" id="errorMsg"></div>
+
+    <button class="btn" id="calcBtn" onclick="startCalculation()">calculate ❤️</button>
+
+    <div class="sound-control" id="soundControl">
+      <button class="sound-btn" id="soundBtn" onclick="toggleSound()">🔊 Enable Sound</button>
+    </div>
+
+    <div class="calculating" id="calculatingBox">
+      <div class="calc-text">Thinking Relationship Chemistry…</div>
+      <div class="spinner-letters">
+        <div class="spinner-letter">F</div><div class="spinner-letter">L</div><div class="spinner-letter">A</div>
+        <div class="spinner-letter">M</div><div class="spinner-letter">E</div><div class="spinner-letter">S</div>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+
+    <div class="result-box" id="resultBox">
+      <div class="result-label">Result for</div>
+      <div id="pairNames" style="font-weight:600; margin-bottom:8px;"></div>
+      <div class="flames-letters" id="flamesLetters"></div>
+      <div class="position-emoji" id="positionEmoji"></div>
+      <div class="result-main" id="resultMain">—</div>
+      <div class="result-desc" id="resultDesc"></div>
+      <div class="cheeky-line" id="cheekyLine"></div>
+      <div class="full-flames" id="fullFlamesBox">
+        <h4>FLAMES</h4>
+        <ul id="fullFlamesList"></ul>
+      </div>
+      <div class="steps" id="stepsBox">
+        <h4>Calculation Steps</h4>
+        <ol id="stepsList"></ol>
+      </div>
+      <div class="action-row">
+        <button class="action-btn" onclick="copyResult()">📋 Copy Result</button>
+        <button class="action-btn" onclick="shareResult()">📤 Share</button>
+      </div>
+    </div>
+
+    <div class="history-box" id="historyBox">
+      <h4>Recent Results</h4>
+      <div id="historyList"></div>
+    </div>
+    <div class="footer" id="footerText">Born on the throne 🚽 · Powered by 💩 · Built at 3 AM</div>
+  </div>
+
+  <script>
+    let currentMode = 'kid';
+    let soundEnabled = false;
+    let isCalculating = false;
+    let lastResult = null;
+    let currentVisualTheme = 'default'; // default | minimal | terminal | material | glass
+    let pendingTheme = null; // selected on theme picker before continue
+    const THEME_CLASSES = ['theme-default', 'theme-minimal', 'theme-terminal', 'theme-material', 'theme-glass'];
+
+    // Western European names (UK, Ireland, France, Germany, Spain, Italy, Netherlands, Portugal, Belgium, Scandinavia, etc.)
+    const randomNamePool = [
+      'James', 'Oliver', 'William', 'Henry', 'George', 'Jack', 'Harry', 'Charlie',
+      'Emma', 'Olivia', 'Sophia', 'Isabella', 'Charlotte', 'Amelia', 'Mia', 'Harper',
+      'Lucas', 'Hugo', 'Louis', 'Gabriel', 'Arthur', 'Raphael', 'Jules', 'Adam',
+      'Emma', 'Lea', 'Chloe', 'Manon', 'Camille', 'Ines', 'Jade', 'Louise',
+      'Lukas', 'Leon', 'Finn', 'Paul', 'Felix', 'Maximilian', 'Jonas', 'Noah',
+      'Emma', 'Hannah', 'Mia', 'Sofia', 'Emilia', 'Lina', 'Marie', 'Anna',
+      'Marco', 'Luca', 'Alessandro', 'Matteo', 'Francesco', 'Leonardo', 'Andrea', 'Giovanni',
+      'Sofia', 'Giulia', 'Aurora', 'Alice', 'Ginevra', 'Emma', 'Giorgia', 'Greta',
+      'Pablo', 'Hugo', 'Martin', 'Daniel', 'Alejandro', 'Alvaro', 'Adrian', 'Diego',
+      'Lucia', 'Sofia', 'Martina', 'Maria', 'Julia', 'Paula', 'Emma', 'Daniela',
+      'Daan', 'Sem', 'Lucas', 'Levi', 'Finn', 'Milan', 'Bram', 'Noah',
+      'Emma', 'Julia', 'Sophie', 'Zoey', 'Sara', 'Mila', 'Anna', 'Lotte',
+      'Joao', 'Martim', 'Rodrigo', 'Santiago', 'Francisco', 'Afonso', 'Tomas', 'Duarte',
+      'Maria', 'Matilde', 'Leonor', 'Carolina', 'Beatriz', 'Mariana', 'Ana', 'Ines',
+      'Erik', 'Lars', 'Johan', 'Anders', 'Nils', 'Oskar', 'Axel', 'Hugo',
+      'Astrid', 'Freja', 'Elsa', 'Alma', 'Maja', 'Ebba', 'Wilma', 'Saga'
+    ];
+
+    const modeDefinitions = {
+      kid: { F:{title:"Friend",desc:"Friend"}, L:{title:"Love",desc:"Love"}, A:{title:"Affection",desc:"Affection"}, M:{title:"Marriage",desc:"Marriage"}, E:{title:"Enemy",desc:"Enemy"}, S:{title:"Sister",desc:"Sister"} },
+      boy: { F:{title:"Flirt",desc:"Flirt"}, L:{title:"Lust",desc:"Lust"}, A:{title:"Affair",desc:"Affair"}, M:{title:"Make-out",desc:"Make-out"}, E:{title:"Erotic",desc:"Erotic"}, S:{title:"Spice",desc:"Spice"} },
+      man: {
+        F:{title:"FROG position FUCK after FLIRT & FOREPLAY FANTASY",desc:"FROG position FUCK after FLIRT & FOREPLAY FANTASY",emoji:"🐸"},
+        L:{title:"LUSTFUL LONGING LIBIDO meets LOTUS position fuck",desc:"LUSTFUL LONGING LIBIDO meets LOTUS position fuck",emoji:"🪷"},
+        A:{title:"AROUSAL from AFFAIR gets satisfied in AMAZON position",desc:"AROUSAL from AFFAIR gets satisfied in AMAZON position",emoji:"🏋️"},
+        M:{title:"MISSIONARY MOTHERfucker MAKE-OUT",desc:"MISSIONARY MOTHERfucker MAKE-OUT",emoji:"🛏️"},
+        E:{title:"EXTRAMARITAL affair in EROTIC EDGE-OF-THE-BED position",desc:"EXTRAMARITAL affair in EROTIC EDGE-OF-THE-BED position",emoji:"🪑"},
+        S:{title:"SEDUCING SEX in SPICY SPOONING position",desc:"SEDUCING SEX in SPICY SPOONING position",emoji:"🥄"}
+      },
+      legend: {
+        F:{title:"Fuck",desc:"Fuck",cheeky:"No thoughts. Only vibes."},
+        L:{title:"Fuck",desc:"Fuck",cheeky:"Brain has left the chat."},
+        A:{title:"Fuck",desc:"Fuck",cheeky:"Just pure heat."},
+        M:{title:"Fuck",desc:"Fuck",cheeky:"Why think when you can feel?"},
+        E:{title:"Fuck",desc:"Fuck",cheeky:"Legend status confirmed."},
+        S:{title:"Fuck",desc:"Fuck",cheeky:"Maximum intensity unlocked."}
+      }
+    };
+
+    const themes = {
+      kid: { title:'flames', footer:'flames', subtitle:'Agentic AI <i>relationship</i> Calculator', loadingText:'Thinking Relationship Chemistry…', primary:'#e91e63', primaryDark:'#c2185b', accent:'#f48fb1', bg:'linear-gradient(145deg, #fff0f5, #fce4ec)', card:'#ffffff', text:'#4a1525', muted:'#ad1457', border:'#f8bbd0', glow:'rgba(233,30,99,0.25)', inputBg:'#fffafc', resultBg:'#fff0f5', btnText:'calculate ❤️' },
+      boy: { title:'xflames', footer:'xflames', subtitle:'Agentic AI <i>oyo</i> Calculator', loadingText:'Thinking Oyoship Chemistry…', primary:'#ff4081', primaryDark:'#f50057', accent:'#ff80ab', bg:'linear-gradient(145deg, #2a0a14, #3d0f1c)', card:'#3d1520', text:'#ffe0e9', muted:'#ff80ab', border:'#6d2a3d', glow:'rgba(255,64,129,0.35)', inputBg:'#2a0d14', resultBg:'#2a0d14', btnText:'Calculate ❤️‍🔥' },
+      man: { title:'xFLAMES🔥', footer:'xFLAMES🔥', subtitle:'Agentic AI <i>ahhh</i> Calculator', loadingText:'Thinking Fucking Position Chemistry…', primary:'#ff1744', primaryDark:'#d50000', accent:'#ff6d00', bg:'linear-gradient(145deg, #1a0508, #2d0a12)', card:'#2d1215', text:'#ffebee', muted:'#ef9a9a', border:'#5c1a1a', glow:'rgba(255,23,68,0.45)', inputBg:'#1f0a0c', resultBg:'#1f0a0c', btnText:'CALCULATE 🔥' },
+      legend: { title:'🥵x🌶️F🍌L👅A🍆M🍩E🍑S🔥', footer:'🥵x🌶️F🍌L👅A🍆M🍩E🍑S🔥', subtitle:'Agentic AI <i>oh-my-god yes-yes mmm-umm aahh</i> Calculator', loadingText:'No Thinking at all…', primary:'#ff0022', primaryDark:'#8b0000', accent:'#ff3300', bg:'linear-gradient(165deg, #050102 0%, #0f0205 35%, #1a0308 100%)', card:'rgba(20,2,6,0.94)', text:'#ffcdd2', muted:'#ff5252', border:'#6b0010', glow:'rgba(255,0,40,0.7)', inputBg:'#120205', resultBg:'rgba(15,1,4,0.96)', btnText:'🥵🌶️🍌👅🍆🍩🍑🔥' }
+    };
+
+    function isReducedFX() {
+      // Themes that skip confetti / cheeky / heavy animations
+      return currentVisualTheme === 'minimal' || currentVisualTheme === 'terminal';
+    }
+
+    function applyVisualTheme(theme) {
+      currentVisualTheme = theme || 'default';
+      // Remove all theme classes then add the active one
+      THEME_CLASSES.forEach(c => document.body.classList.remove(c));
+      document.body.classList.add('theme-' + currentVisualTheme);
+
+      // Sync in-app select if present
+      const sel = document.getElementById('themeSelect');
+      if (sel && sel.value !== currentVisualTheme) sel.value = currentVisualTheme;
+
+      // Persist
+      try { localStorage.setItem('flamesVisualTheme', currentVisualTheme); } catch (e) {}
+
+      if (currentVisualTheme === 'default') {
+        // Restore mode color theme CSS vars + legend/boy classes
+        applyTheme(currentMode);
+      } else {
+        // Non-default themes own the chrome — clear inline styles & mode overlays
+        document.body.style.background = '';
+        // legend-mode dark red overlays fight glass/material; remove them
+        // (glass CSS also neutralizes them, but cleaner to drop the class)
+        if (currentVisualTheme !== 'default') {
+          document.body.classList.remove('legend-mode');
+        }
+        // boy-mode only affects spinner speed — safe to keep or clear
+        if (currentVisualTheme === 'minimal' || currentVisualTheme === 'terminal' || currentVisualTheme === 'glass' || currentVisualTheme === 'material') {
+          // keep boy-mode if user is on boy content-mode for slightly faster spinner; optional
+        }
+        applyThemeTitles(currentMode);
+        // Still reset result UI when switching visual theme
+        const sound = document.getElementById('soundControl');
+        if (sound) sound.classList.remove('visible');
+        stopSound();
+      }
+    }
+
+    function onThemeSelectChange(value) {
+      applyVisualTheme(value);
+    }
+
+    function pickTheme(theme) {
+      pendingTheme = theme;
+      document.querySelectorAll('.tp-card').forEach(c => {
+        c.classList.toggle('selected', c.dataset.theme === theme);
+      });
+      const btn = document.getElementById('tpContinue');
+      if (btn) btn.disabled = false;
+    }
+
+    function confirmTheme() {
+      const theme = pendingTheme || 'default';
+      applyVisualTheme(theme);
+      const tp = document.getElementById('themePicker');
+      if (tp) {
+        tp.classList.remove('show');
+        tp.classList.add('hide');
+        setTimeout(() => { tp.style.display = 'none'; }, 500);
+      }
+      // Ensure app is ready
+      try {
+        selectMode(currentMode || 'kid');
+        renderHistory();
+      } catch (e) { console.warn(e); }
+    }
+
+    // Apply only titles/subtitle/button text
+    // Footer is static and no longer follows the mode title
+    function applyThemeTitles(mode) {
+      const t = themes[mode];
+      let titleText = t.title;
+      if (isReducedFX() && (mode === 'man' || mode === 'legend')) {
+        // Strip emojis from title for man and legend in minimal/terminal
+        if (mode === 'legend') {
+          titleText = 'xFLAMES!';
+        } else {
+          titleText = t.title.replace(/[^\w\s]/g, '').trim() || t.title;
+        }
+      }
+      document.getElementById('appTitle').textContent = titleText;
+      document.getElementById('subtitle').innerHTML = t.subtitle;
+      document.title = titleText;
+      const calcBtn = document.getElementById('calcBtn');
+      if (isReducedFX()) {
+        if (mode === 'legend') {
+          calcBtn.innerHTML = 'do you really need to CALCULATE?<br>don\u2019t you already know what to do?';
+        } else {
+          let btn = t.btnText.replace(/[^\w\s]/g, '').trim();
+          if (!btn) btn = 'Calculate';
+          calcBtn.textContent = btn;
+        }
+      } else {
+        calcBtn.textContent = t.btnText;
+      }
+    }
+
+    function applyTheme(mode) {
+      applyThemeTitles(mode);
+
+      // Always reset result UI when switching content mode
+      const sound = document.getElementById('soundControl');
+      if (sound) sound.classList.remove('visible');
+      stopSound();
+      const rb = document.getElementById('resultBox');
+      if (rb) rb.style.display = 'none';
+      const eh = document.getElementById('emptyHint');
+      if (eh) eh.style.display = 'block';
+
+      document.body.classList.toggle('boy-mode', mode === 'boy');
+
+      // Color chrome only for Default visual theme
+      if (currentVisualTheme !== 'default') {
+        document.body.classList.remove('legend-mode');
+        document.body.style.background = '';
+        return;
+      }
+
+      const t = themes[mode];
+      const root = document.documentElement;
+      root.style.setProperty('--primary', t.primary);
+      root.style.setProperty('--primary-dark', t.primaryDark);
+      root.style.setProperty('--accent', t.accent);
+      root.style.setProperty('--card', t.card);
+      root.style.setProperty('--text', t.text);
+      root.style.setProperty('--muted', t.muted);
+      root.style.setProperty('--border', t.border);
+      root.style.setProperty('--glow', t.glow);
+      root.style.setProperty('--input-bg', t.inputBg);
+      root.style.setProperty('--result-bg', t.resultBg);
+      document.body.style.background = t.bg;
+      document.body.classList.toggle('legend-mode', mode === 'legend');
+    }
+
+    function selectMode(mode) {
+      if (isCalculating) return;
+      currentMode = mode;
+      document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.mode === mode));
+      applyTheme(mode);
+    }
+
+    function cleanName(name) { return name.toLowerCase().replace(/[^a-z]/g, ''); }
+
+    function randomNames() {
+      if (isCalculating) return;
+      const n1 = randomNamePool[Math.floor(Math.random() * randomNamePool.length)];
+      let n2 = randomNamePool[Math.floor(Math.random() * randomNamePool.length)];
+      while (n2 === n1) n2 = randomNamePool[Math.floor(Math.random() * randomNamePool.length)];
+      document.getElementById('name1').value = n1;
+      document.getElementById('name2').value = n2;
+      document.getElementById('emptyHint').style.display = 'none';
+    }
+
+    function clearNames() {
+      if (isCalculating) return;
+      document.getElementById('name1').value = '';
+      document.getElementById('name2').value = '';
+      document.getElementById('emptyHint').style.display = 'block';
+    }
+
+    function startCalculation() {
+      if (isCalculating) return;
+      const name1 = document.getElementById('name1').value.trim();
+      const name2 = document.getElementById('name2').value.trim();
+      const errorEl = document.getElementById('errorMsg');
+      if (!currentMode) { errorEl.textContent = 'Please select a mode'; errorEl.style.display = 'block'; return; }
+      if (!name1 || !name2) { errorEl.textContent = 'Please enter both names'; errorEl.style.display = 'block'; return; }
+      errorEl.style.display = 'none';
+      document.getElementById('emptyHint').style.display = 'none';
+      document.getElementById('soundControl').classList.remove('visible');
+      document.querySelector('.calc-text').textContent = themes[currentMode]?.loadingText || 'Thinking…';
+      isCalculating = true;
+      document.querySelectorAll('.mode-btn').forEach(b => b.disabled = true);
+      document.getElementById('resultBox').style.display = 'none';
+      document.getElementById('calculatingBox').classList.add('active');
+      document.getElementById('calcBtn').disabled = true;
+
+      // Regular mode: 4.5 seconds | Minimal: fast
+      const duration = isReducedFX() ? 500 : 4500;
+
+      const progress = document.getElementById('progressFill');
+      progress.style.animation = 'none'; progress.offsetHeight;
+      progress.style.animation = `progress ${duration/1000}s ease-in-out forwards`;
+
+      setTimeout(() => {
+        document.getElementById('calculatingBox').classList.remove('active');
+        document.getElementById('calcBtn').disabled = false;
+        document.querySelectorAll('.mode-btn').forEach(b => b.disabled = false);
+        isCalculating = false;
+        calculateFLAMES(name1, name2);
+        if (currentMode === 'legend' && !isReducedFX()) document.getElementById('soundControl').classList.add('visible');
+      }, duration);
+    }
+
+    function calculateFLAMES(name1, name2) {
+      const n1 = cleanName(name1), n2 = cleanName(name2);
+      const count1 = {}, count2 = {};
+      for (let c of n1) count1[c] = (count1[c]||0)+1;
+      for (let c of n2) count2[c] = (count2[c]||0)+1;
+      let remaining = 0;
+      new Set([...Object.keys(count1), ...Object.keys(count2)]).forEach(c => remaining += Math.abs((count1[c]||0)-(count2[c]||0)));
+      if (remaining === 0) remaining = 1;
+      let flames = ['F','L','A','M','E','S'];
+      const steps = []; let currentCount = remaining;
+      steps.push(`Total remaining letters after cancelling common ones: <strong>${remaining}</strong>`);
+      while (flames.length > 1) {
+        const idx = (currentCount-1) % flames.length;
+        const struck = flames[idx];
+        steps.push(`Count ${currentCount} → lands on <strong>${struck}</strong> → remove ${struck}`);
+        flames.splice(idx, 1); currentCount = remaining;
+      }
+      const result = flames[0];
+      const defs = modeDefinitions[currentMode];
+      const meaning = defs[result];
+      lastResult = { name1, name2, result, title: meaning.title, mode: currentMode };
+      document.getElementById('pairNames').textContent = `${name1}  ×  ${name2}`;
+      document.getElementById('resultMain').textContent = meaning.title;
+      document.getElementById('resultDesc').textContent = meaning.desc;
+
+      const posEl = document.getElementById('positionEmoji');
+      if (currentMode === 'man' && meaning.emoji && !isReducedFX()) { posEl.textContent = meaning.emoji; posEl.style.display = 'block'; }
+      else posEl.style.display = 'none';
+
+      const cheekyEl = document.getElementById('cheekyLine');
+      if (currentMode === 'legend' && meaning.cheeky && !isReducedFX()) { cheekyEl.textContent = meaning.cheeky; cheekyEl.style.display = 'block'; }
+      else cheekyEl.style.display = 'none';
+
+      const lettersDiv = document.getElementById('flamesLetters');
+      lettersDiv.innerHTML = '';
+      ['F','L','A','M','E','S'].forEach(l => {
+        const span = document.createElement('div');
+        span.className = 'flame-letter' + (l === result ? ' active' : ' struck');
+        span.textContent = l; lettersDiv.appendChild(span);
+      });
+
+      const fullList = document.getElementById('fullFlamesList');
+      fullList.innerHTML = '';
+      ['F','L','A','M','E','S'].forEach(letter => {
+        const li = document.createElement('li');
+        li.innerHTML = `<strong>${letter}</strong> — ${defs[letter].title}`;
+        fullList.appendChild(li);
+      });
+      document.getElementById('fullFlamesBox').style.display = 'block';
+
+      const stepsList = document.getElementById('stepsList');
+      stepsList.innerHTML = '';
+      steps.forEach(s => { const li = document.createElement('li'); li.innerHTML = s; stepsList.appendChild(li); });
+      stepsList.innerHTML += `<li>Final remaining letter: <strong>${result}</strong> → <strong>${meaning.title}</strong></li>`;
+      document.getElementById('resultBox').style.display = 'block';
+
+      if (!isReducedFX()) {
+        launchConfetti(result);
+        if (navigator.vibrate) navigator.vibrate([40, 30, 60]);
+      }
+      saveToHistory(name1, name2, result, meaning.title);
+      renderHistory();
+    }
+
+    function launchConfetti(letter) {
+      if (isReducedFX()) return;
+      const canvas = document.getElementById('confettiCanvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+      const colors = { F:['#ff6b6b','#ff8e8e'], L:['#ff4081','#f50057'], A:['#ff9800','#ff5722'], M:['#e91e63','#c2185b'], E:['#9c27b0','#7b1fa2'], S:['#ff1744','#d50000'] };
+      const cols = colors[letter] || colors.M;
+      const particles = [];
+      for (let i = 0; i < 70; i++) {
+        particles.push({ x: canvas.width/2, y: canvas.height/2, vx: (Math.random()-0.5)*14, vy: (Math.random()-0.5)*14-4, size: Math.random()*7+3, color: cols[Math.floor(Math.random()*cols.length)], life: 1 });
+      }
+      function animate() {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        let alive = false;
+        particles.forEach(p => {
+          if (p.life <= 0) return; alive = true;
+          p.x += p.vx; p.y += p.vy; p.vy += 0.18; p.life -= 0.016;
+          ctx.globalAlpha = Math.max(0, p.life); ctx.fillStyle = p.color;
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill();
+        });
+        if (alive) requestAnimationFrame(animate); else ctx.clearRect(0,0,canvas.width,canvas.height);
+      }
+      animate();
+    }
+
+    function saveToHistory(n1, n2, letter, title) {
+      try {
+        let hist = JSON.parse(localStorage.getItem('flamesHistory') || '[]');
+        hist.unshift({ n1, n2, letter, title, mode: currentMode, time: Date.now() });
+        hist = hist.slice(0, 5);
+        localStorage.setItem('flamesHistory', JSON.stringify(hist));
+      } catch (e) { /* localStorage unavailable */ }
+    }
+
+    function renderHistory() {
+      try {
+        const hist = JSON.parse(localStorage.getItem('flamesHistory') || '[]');
+        const box = document.getElementById('historyBox');
+        const list = document.getElementById('historyList');
+        if (hist.length === 0) { box.style.display = 'none'; return; }
+        box.style.display = 'block';
+        list.innerHTML = hist.map(h => `<div class="history-item">${h.n1} × ${h.n2} → <strong>${h.letter}</strong> (${h.title.substring(0,28)}${h.title.length>28?'…':''})</div>`).join('');
+      } catch (e) {
+        const box = document.getElementById('historyBox');
+        if (box) box.style.display = 'none';
+      }
+    }
+
+    function copyResult() {
+      if (!lastResult) return;
+      const text = `${lastResult.name1} × ${lastResult.name2} = ${lastResult.title} (${lastResult.mode.toUpperCase()} mode)`;
+      navigator.clipboard.writeText(text).then(() => alert('Result copied!')).catch(() => prompt('Copy this:', text));
+    }
+
+    function shareResult() {
+      if (!lastResult) return;
+      const text = `${lastResult.name1} × ${lastResult.name2} = ${lastResult.title} (${lastResult.mode.toUpperCase()} mode)`;
+      if (navigator.share) navigator.share({ title: 'FLAMES Result', text }); else copyResult();
+    }
+
+    function toggleSound() {
+      const btn = document.getElementById('soundBtn');
+      if (!soundEnabled) { soundEnabled = true; btn.textContent = '🔊 Sound On'; btn.classList.add('playing'); }
+      else stopSound();
+    }
+    function stopSound() {
+      soundEnabled = false;
+      const btn = document.getElementById('soundBtn');
+      if (btn) { btn.textContent = '🔊 Enable Sound'; btn.classList.remove('playing'); }
+    }
+
+    // Splash with rotating status messages
+    window.onload = () => {
+      const statusMessages = [
+        'flamesAI is Generating…',
+        'flamesAI is Building…',
+        'flamesAI is Neural Matching…',
+        'flamesAI is Quantum Matching…'
+      ];
+      let msgIndex = 0;
+      const statusEl = document.getElementById('splashStatus');
+
+      const msgInterval = setInterval(() => {
+        msgIndex = (msgIndex + 1) % statusMessages.length;
+        statusEl.style.opacity = '0';
+        setTimeout(() => {
+          statusEl.textContent = statusMessages[msgIndex];
+          statusEl.style.opacity = '1';
+        }, 200);
+      }, 900);
+
+      statusEl.style.transition = 'opacity 0.2s ease';
+
+      setTimeout(() => {
+        clearInterval(msgInterval);
+        const splash = document.getElementById('splash');
+        if (splash) splash.classList.add('hide');
+
+        // Show theme selector screen
+        const tp = document.getElementById('themePicker');
+        if (tp) {
+          tp.style.display = 'flex';
+          // force reflow then fade in
+          void tp.offsetWidth;
+          tp.classList.add('show');
+          // Pre-select saved theme if any
+          let saved = null;
+          try { saved = localStorage.getItem('flamesVisualTheme'); } catch (e) {}
+          if (saved && ['default','minimal','terminal','material','glass'].includes(saved)) {
+            pickTheme(saved);
+          }
+        } else {
+          // Fallback if picker missing
+          try {
+            selectMode('kid');
+            renderHistory();
+          } catch (e) { console.warn('Init error:', e); }
+        }
+      }, 3800);
+    };
+  </script>
+</body>
+</html>
